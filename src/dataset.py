@@ -14,7 +14,7 @@ class WikiDataset(Dataset):
         return x
 
 def load_dataset(path: str) -> dict:
-    return torch.load(path)
+    return torch.load(path, weights_only=True)
 
 def get_split(dataset: dict, split: str, modality: str) -> torch.Tensor:
     """

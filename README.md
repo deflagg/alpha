@@ -19,11 +19,11 @@ Reproducible experiment to compare Traditional LM (BPE-32K) vs Semantic LM (comp
 
 1. Create and activate a virtual environment:
    ```bash
-   python -m venv venv
+   python -m venv .venv
    # On Windows:
-   .\venv\Scripts\activate
+   .\.venv\Scripts\activate
    # On Linux/macOS:
-   source venv/bin/activate
+   source .venv/bin/activate
    ```
 
 2. Install dependencies:
