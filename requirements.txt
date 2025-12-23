@@ -1,0 +1,7 @@
+torch
+tokenizers
+python-dotenv
+wandb
+pyyaml
+tqdm
+numpy
