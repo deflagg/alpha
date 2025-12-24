@@ -13,7 +13,7 @@ data:
     enabled: true
     method: shuffle_select
     seed: 42
-    train_n: 200000
+    train_n: 529930
     test_n: 5000
     validation_n: null
 
