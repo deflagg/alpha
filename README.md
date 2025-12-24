@@ -78,6 +78,25 @@ pip install -r requirements.txt
 chmod +x scripts/run_baseline.sh
 ./scripts/run_baseline.sh
 ```
+
+```bash
+# Get the code
+git clone https://github.com/deflagg/alpha.git
+cd alpha
+
+# Pull latest (if already cloned)
+git pull origin main
+
+# Standard setup
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Run the pipeline
+chmod +x scripts/run_experimental.sh
+./scripts/run_experimental.sh
+```
+
 ## Usage
 
 ### 1. Full Pipeline (Windows)

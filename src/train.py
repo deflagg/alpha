@@ -65,7 +65,7 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size, shuffle=False)
     
     # Model
-    model_type = cfg.model.get("type", "baseline")
+    model_type = getattr(cfg.model, "type", "baseline")
     if model_type == "baseline":
         model = BaselineGPT(cfg).to(device)
     elif model_type == "experimental":
