@@ -74,9 +74,10 @@ def main():
     print("\n--- Sample Generation ---")
     prompts = [
         "The",
-        "WikiText-2 is",
-        "Language models are",
-        "In a hole in the ground"
+        "Once",
+        "The girl",
+        "Once Upon a time",
+        'The day is fun and'
     ]
     
     for p in prompts:
