@@ -1,7 +1,8 @@
 torch
-tokenizers
+numpy
+pyyaml
 python-dotenv
 wandb
-pyyaml
+datasets
+tokenizers
 tqdm
-numpy
