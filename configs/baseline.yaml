@@ -5,11 +5,17 @@ run:
   out_dir: artifacts/runs
 
 data:
-  hf_dataset: Salesforce/wikitext
-  hf_config: wikitext-2-raw-v1
-  raw_dir: data/raw/wikitext-2-raw-v1
-  processed_dir: data/processed/wt2_bpe8k_seq128
+  hf_dataset: roneneldan/TinyStories
+  raw_dir: data/raw/tinystories_subsample
+  processed_dir: data/processed/ts_bpe8k_seq128
   seq_len: 128
+  subsample:
+    enabled: true
+    method: shuffle_select
+    seed: 42
+    train_n: 200000
+    test_n: 5000
+    validation_n: null
 
 tokenizer:
   out_dir: artifacts/tokenizers/bpe8k_wt2
