@@ -34,7 +34,7 @@ def evaluate(model, dataloader, device, amp=False):
     losses = []
     for x, y in dataloader:
         x, y = x.to(device), y.to(device)
-        with torch.cuda.amp.autocast(enabled=amp):
+        with torch.amp.autocast('cuda', enabled=amp):
             logits = model(x)
             loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
         losses.append(loss.item())
@@ -77,7 +77,7 @@ def main():
     # Training state
     start_step = 0
     best_val_loss = float('inf')
-    scaler = torch.cuda.amp.GradScaler(enabled=cfg.train.amp)
+    scaler = torch.amp.GradScaler('cuda', enabled=cfg.train.amp)
     
     # Resolve run directory
     run_dir = Path(cfg.run.out_dir) / cfg.run.name
@@ -105,7 +105,7 @@ def main():
             param_group['lr'] = curr_lr
             
         # Optimization step
-        with torch.cuda.amp.autocast(enabled=cfg.train.amp):
+        with torch.amp.autocast('cuda', enabled=cfg.train.amp):
             logits = model(x)
             loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
             
