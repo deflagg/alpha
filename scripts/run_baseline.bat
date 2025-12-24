@@ -7,7 +7,7 @@ set CONFIG=configs\baseline.yaml
 
 echo.
 echo # 1) data prep (one-time)
-python -m src.data.download_wikitext2
+python -m src.data.download_tinystories --config %CONFIG%
 if errorlevel 1 exit /b %errorlevel%
 
 python -m src.data.train_tokenizer --config %CONFIG%

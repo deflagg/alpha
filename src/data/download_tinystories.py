@@ -2,6 +2,7 @@ import os
 import json
 import hashlib
 import argparse
+import random
 from pathlib import Path
 from datasets import load_dataset
 from src.utils.config import load_config
@@ -33,15 +34,20 @@ def main():
     print(f"Loading dataset {dataset_name}...")
     dataset = load_dataset(dataset_name)
     
-    # TinyStories only has train and validation
-    train_full = dataset["train"].shuffle(seed=seed)
+    # TinyStories only has train and validation splits
+    full_train = dataset["train"]
     
-    # Test from first test_n
-    test_ds = train_full.select(range(test_n))
-    # Train from next train_n
-    train_ds = train_full.select(range(test_n, test_n + train_n))
+    # Deterministic shuffling of indices
+    indices = list(range(len(full_train)))
+    random.Random(seed).shuffle(indices)
     
-    # Validation from original validation
+    test_indices = indices[:test_n]
+    train_indices = indices[test_n : test_n + train_n]
+    
+    test_ds = full_train.select(test_indices)
+    train_ds = full_train.select(train_indices)
+    
+    # Validation split
     val_ds = dataset["validation"]
     if val_n is not None:
         val_ds = val_ds.shuffle(seed=seed).select(range(min(val_n, len(val_ds))))
@@ -84,19 +90,12 @@ def main():
         }
         
         # Save indices for train and test
-        if split_name in ["train", "test"]:
-            # ds.indices is not directly available in standard datasets, 
-            # but since we used select(range(...)) on a shuffled dataset, 
-            # we need the indices from the shuffling.
-            # train_full.indices contains the shuffled indices.
-            if split_name == "test":
-                indices = train_full.indices[:test_n]
-            else:
-                indices = train_full.indices[test_n : test_n + train_n]
-            
-            indices_path = raw_dir / f"{split_name}_indices.json"
-            with open(indices_path, "w") as f:
-                json.dump(indices, f)
+        if split_name == "train":
+            with open(raw_dir / "train_indices.json", "w") as f:
+                json.dump(train_indices, f)
+        elif split_name == "test":
+            with open(raw_dir / "test_indices.json", "w") as f:
+                json.dump(test_indices, f)
         
         print(f"  Saved to {output_file} ({line_count} lines, sha256: {checksum[:8]}...)")
     

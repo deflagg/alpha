@@ -22,7 +22,7 @@ def main():
     
     train_txt = Path(cfg.data.raw_dir) / "train.txt"
     if not train_txt.exists():
-        raise FileNotFoundError(f"Training file not found: {train_txt}. Run download_wikitext2 first.")
+        raise FileNotFoundError(f"Training file not found: {train_txt}. Run data downloader first.")
     
     tokenizer_dir = Path(cfg.tokenizer.out_dir)
     tokenizer_dir.mkdir(parents=True, exist_ok=True)
