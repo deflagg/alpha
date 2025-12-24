@@ -77,7 +77,8 @@ def main():
         "Once",
         "The girl",
         "Once Upon a time",
-        'The day is fun and'
+        'The day is fun and',
+        'The boy and his dog'
     ]
     
     for p in prompts:
