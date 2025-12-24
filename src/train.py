@@ -9,6 +9,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from src.models.baseline_gpt import BaselineGPT
+from src.models.experimental_gpt import ExperimentalGPT
 from src.data.dataset import PackedMemmapDataset
 from src.utils.config import load_config
 from src.utils.seed import set_seed
@@ -64,7 +65,13 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size, shuffle=False)
     
     # Model
-    model = BaselineGPT(cfg).to(device)
+    model_type = cfg.model.get("type", "baseline")
+    if model_type == "baseline":
+        model = BaselineGPT(cfg).to(device)
+    elif model_type == "experimental":
+        model = ExperimentalGPT(cfg).to(device)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
     
     # Optimizer
     optimizer = torch.optim.AdamW(
