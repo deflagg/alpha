@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import argparse
-from src.models.baseline_gpt import BaselineGPT
+from src.models.baseline.model import BaselineGPT
 from src.utils.config import load_config
 
 def test_causal_mask(cfg):

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Type
 
-from src.models.baseline_gpt import BaselineGPT
-from src.models.falcon_gpt import FalconGPT
+from src.models.baseline.model import BaselineGPT
+from src.models.falcon.model import FalconGPT
 
 
 _MODEL_REGISTRY: dict[str, Type] = {

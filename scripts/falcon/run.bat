@@ -1,9 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
-cd /d "%~dp0\.."
+cd /d "%~dp0\..\.."
 set PYTHONPATH=%CD%
 
-set CONFIG=configs\baseline.yaml
+set CONFIG=configs\falcon.yaml
 
 echo.
 echo # 1) data prep (one-time)
@@ -23,8 +23,6 @@ if errorlevel 1 exit /b %errorlevel%
 
 echo.
 echo # 3) eval (optional standalone)
-REM Pass ckpt path as first arg, e.g.:
-REM scripts\run_baseline.bat artifacts\runs\...\checkpoints\best_model.pt
 set CKPT=%1
 if "%CKPT%"=="" goto :done
 

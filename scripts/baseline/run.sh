@@ -2,10 +2,10 @@
 set -e
 
 # Change to project root
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-CONFIG="configs/falcon.yaml"
+CONFIG="configs/baseline.yaml"
 
 echo ""
 echo "# 1) data prep (one-time)"
@@ -28,4 +28,5 @@ if [ -z "$CKPT" ]; then
 fi
 
 python -m src.eval --config $CONFIG --ckpt $CKPT
+
 echo "Done."

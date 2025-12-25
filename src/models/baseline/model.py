@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.models.falcon_layers import TransformerBlock
+from .layers import TransformerBlock
 
-class FalconGPT(nn.Module):
+class BaselineGPT(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         self.max_seq_len = cfg.model.max_seq_len
@@ -31,7 +31,7 @@ class FalconGPT(nn.Module):
         # Initialize weights
         self.apply(self._init_weights)
         
-        print(f"Experimental Model initialized with {self.get_n_params()/1e6:.2f}M parameters.")
+        print(f"Model initialized with {self.get_n_params()/1e6:.2f}M parameters.")
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
