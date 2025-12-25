@@ -36,14 +36,14 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 │  ├─ tokenizers/               # Saved tokenizer.json & meta
 │  └─ runs/                     # Checkpoints and logs
 ├─ scripts/
-│  ├─ run_baseline.bat          # Windows baseline runner script
-│  ├─ run_baseline.sh           # Linux/SSH baseline runner script
-│  ├─ run_falcon.bat            # Windows falcon runner script
-│  └─ run_falcon.sh             # Linux/SSH falcon runner script
+│  ├─ baseline/                 # Baseline runner scripts
+│  └─ falcon/                   # Falcon runner scripts
 ├─ src/
-│  ├─ data/                     # Data pipeline (download, train tokenizer, pack)
-│  ├─ models/                   # Model architecture and factory
-│  ├─ utils/                    # Common utils (config, seed, logging, tests)
+│  ├─ data/                     # Data pipeline
+│  ├─ models/                   # Model architectures
+│  │  ├─ baseline/              # Baseline GPT implementation
+│  │  └─ falcon/                # Falcon GPT implementation
+│  ├─ utils/                    # Common utils
 │  ├─ train.py                  # Main training loop
 │  └─ eval.py                   # Evaluation and sampling harness
 ├─ .env.example                 # W&B credentials template
@@ -64,8 +64,8 @@ This project implements a decoder-only Transformer with a focus on reproducibili
    source .venv/bin/activate
    pip install -r requirements.txt
 
-   chmod +x scripts/run_baseline.sh
-   ./scripts/run_baseline.sh
+   chmod +x scripts/baseline/run.sh
+   ./scripts/baseline/run.sh
    ```
 
 2. **Falcon model setup**:
@@ -79,26 +79,26 @@ This project implements a decoder-only Transformer with a focus on reproducibili
    source .venv/bin/activate
    pip install -r requirements.txt
 
-   chmod +x scripts/run_falcon.sh
-   ./scripts/run_falcon.sh
+   chmod +x scripts/falcon/run.sh
+   ./scripts/falcon/run.sh
    ```
 
 ## Usage
 
 ### 1. Full Pipeline (Windows)
-Run the entire data prep and training pipeline with one command:
+Run the entire data prep and training pipeline:
 ```bat
-scripts\run_baseline.bat
+scripts\baseline\run.bat
 ```
 Or for the falcon model:
 ```bat
-scripts\run_falcon.bat
+scripts\falcon\run.bat
 ```
 
 ### 2. Full Pipeline (Linux)
 ```bash
-chmod +x scripts/*.sh
-./scripts/run_baseline.sh
+chmod +x scripts/**/*.sh
+./scripts/baseline/run.sh
 ```
 
 ### 3. Evaluation
