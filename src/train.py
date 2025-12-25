@@ -8,13 +8,22 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 from tqdm import tqdm
 
-from src.models.baseline_gpt import BaselineGPT
-from src.models.experimental_gpt import ExperimentalGPT
+from src.models.factory import build_model
 from src.data.dataset import PackedMemmapDataset
 from src.utils.config import load_config
 from src.utils.seed import set_seed
 from src.utils.logging import setup_logging, log_metrics, finish_logging
 from src.utils.checkpointing import save_checkpoint
+
+def require_cuda(device_str: str) -> None:
+    if not device_str.startswith("cuda"):
+        raise RuntimeError(
+            f"This repo is GPU-only. Got run.device={device_str!r}. "
+            "Set run.device to 'cuda' or 'cuda:0'."
+        )
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available. This repo is GPU-only.")
+
 
 def get_lr(step, max_steps, warmup_steps, lr, min_lr):
     # 1) Linear warmup for warmup_steps steps
@@ -54,7 +63,8 @@ def main():
     set_seed(cfg.run.seed)
     setup_logging(cfg)
     
-    device = torch.device(cfg.run.device if torch.cuda.is_available() else "cpu")
+    require_cuda(cfg.run.device)
+    device = torch.device(cfg.run.device)
     print(f"Using device: {device}")
     
     # Data loaders
@@ -65,13 +75,7 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size, shuffle=False)
     
     # Model
-    model_type = getattr(cfg.model, "type", "baseline")
-    if model_type == "baseline":
-        model = BaselineGPT(cfg).to(device)
-    elif model_type == "experimental":
-        model = ExperimentalGPT(cfg).to(device)
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
+    model = build_model(cfg).to(device)
     
     # Optimizer
     optimizer = torch.optim.AdamW(

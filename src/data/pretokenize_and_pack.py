@@ -35,6 +35,14 @@ def main():
     bos_id = tokenizer_meta["special_tokens"]["<bos>"]
     eos_id = tokenizer_meta["special_tokens"]["<eos>"]
     
+    vocab_size = tokenizer.get_vocab_size()
+    if vocab_size >= 2**16:
+        raise RuntimeError(
+            f"Tokenizer vocab_size={vocab_size} exceeds uint16 capacity. "
+            "Either reduce vocab_size or change packing dtype to uint32."
+        )
+
+    
     raw_dir = Path(cfg.data.raw_dir)
     processed_dir = Path(cfg.data.processed_dir)
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -45,6 +53,7 @@ def main():
     meta = {
         "seq_len": seq_len,
         "dtype": "uint16",
+        "vocab_size": vocab_size,
         "tokenizer_sha256": tokenizer_meta["tokenizer_sha256"],
         "splits": {}
     }

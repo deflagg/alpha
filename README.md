@@ -1,6 +1,6 @@
-# Tiny Baseline LM on WikiText-2
+# Tiny Baseline LM on TinyStories
 
-A clean, reproducible baseline GPT-style language model trained on the WikiText-2 (raw) corpus.
+A clean, reproducible baseline GPT-style language model trained on the TinyStories dataset.
 
 ## Overview
 
@@ -12,11 +12,12 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 - **Custom BPE Tokenizer**: Byte-level BPE with 8192 vocab size trained only on the training split.
 - **Fixed Seq-Len Packing**: Tokenized stream packed into blocks of 129 tokens (`seq_len=128` + 1 target).
 - **Single-run Reproducibility**: Seeded components and checksum-verified dataset/tokenizer artifacts.
+- **GPU-Only**: Explicitly requires CUDA for performance and consistency.
 
 ## Tech Stack
 
 - **Framework**: PyTorch
-- **Data**: Hugging Face `datasets` (WikiText-2 raw v1)
+- **Data**: Hugging Face `roneneldan/TinyStories`
 - **Tokenizer**: Hugging Face `tokenizers` (Byte-level BPE)
 - **Logging**: Weights & Biases (W&B)
 - **Utilities**: `numpy`, `pyyaml`, `python-dotenv`, `tqdm`
@@ -26,7 +27,8 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 ```
 .
 ├─ configs/
-│  └─ baseline.yaml             # Single source of truth config
+│  ├─ baseline.yaml             # Baseline model config
+│  └─ falcon.yaml               # Falcon model config
 ├─ data/
 │  ├─ raw/                      # Downloaded raw text
 │  └─ processed/                # Packed token blocks (memmap)
@@ -34,11 +36,13 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 │  ├─ tokenizers/               # Saved tokenizer.json & meta
 │  └─ runs/                     # Checkpoints and logs
 ├─ scripts/
-│  ├─ run_baseline.bat          # Windows runner script
-│  └─ run_baseline.sh           # Linux/SSH runner script
+│  ├─ run_baseline.bat          # Windows baseline runner script
+│  ├─ run_baseline.sh           # Linux/SSH baseline runner script
+│  ├─ run_falcon.bat            # Windows falcon runner script
+│  └─ run_falcon.sh             # Linux/SSH falcon runner script
 ├─ src/
 │  ├─ data/                     # Data pipeline (download, train tokenizer, pack)
-│  ├─ models/                   # Model architecture (layers, GPT wrapper)
+│  ├─ models/                   # Model architecture and factory
 │  ├─ utils/                    # Common utils (config, seed, logging, tests)
 │  ├─ train.py                  # Main training loop
 │  └─ eval.py                   # Evaluation and sampling harness
@@ -57,46 +61,6 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 2. **Setup Environment**:
    Copy `.env.example` to `.env` and add your `WANDB_API_KEY`.
 
-## RunPod / Linux SSH Setup
-
-If you are running on a RunPod instance or any Linux SSH terminal:
-
-```bash
-# Get the code
-git clone https://github.com/deflagg/alpha.git
-cd alpha
-
-# Pull latest (if already cloned)
-git pull origin main
-
-# Standard setup
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Run the pipeline
-chmod +x scripts/run_baseline.sh
-./scripts/run_baseline.sh
-```
-
-```bash
-# Get the code
-git clone https://github.com/deflagg/alpha.git
-cd alpha
-
-# Pull latest (if already cloned)
-git pull origin main
-
-# Standard setup
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Run the pipeline
-chmod +x scripts/run_experimental.sh
-./scripts/run_experimental.sh
-```
-
 ## Usage
 
 ### 1. Full Pipeline (Windows)
@@ -104,24 +68,21 @@ Run the entire data prep and training pipeline with one command:
 ```bat
 scripts\run_baseline.bat
 ```
-
-### 2. Manual Execution
-
-**Data Preparation**:
-```bash
-python -m src.data.download_wikitext2
-python -m src.data.train_tokenizer --config configs/baseline.yaml
-python -m src.data.pretokenize_and_pack --config configs/baseline.yaml
+Or for the falcon model:
+```bat
+scripts\run_falcon.bat
 ```
 
-**Training**:
+### 2. Full Pipeline (Linux)
 ```bash
-python -m src.train --config configs/baseline.yaml
+chmod +x scripts/*.sh
+./scripts/run_baseline.sh
 ```
 
-**Evaluation**:
+### 3. Evaluation
+Pass a checkpoint path to the runner scripts to run evaluation:
 ```bash
-python -m src.eval --config configs/baseline.yaml --ckpt artifacts/runs/baseline_wt2_bpe8k/checkpoints/best_model.pt
+./scripts/run_baseline.sh artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
 ```
 
 ## Verification
@@ -130,11 +91,11 @@ The project includes unit tests to ensure architectural correctness:
 ```bash
 python -m src.utils.tests --config configs/baseline.yaml
 ```
-Tests passed include:
+Tests include:
 - **Causal Mask Test**: No information leakage from future tokens.
 - **Shape Test**: Model outputs match expected tensor shapes.
 - **Shift Test**: Dataset correctly returns targets shifted by 1.
 
 ## Results
 
-Metrics are logged to W&B. The training loop saves the `best_model.pt` based on validation loss. Perplexity (PPL) is computed on the test split during the final evaluation.
+Metrics are logged to W&B. The training loop saves the `best_model.pt` based on validation loss. Perplexity (PPL) is computed on the validation/test splits.

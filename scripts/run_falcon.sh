@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")/.."
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-CONFIG="configs/experimental.yaml"
+CONFIG="configs/falcon.yaml"
 
 echo ""
 echo "# 1) data prep (one-time)"

@@ -5,11 +5,21 @@ from torch.utils.data import DataLoader
 from tokenizers import Tokenizer
 from pathlib import Path
 
-from src.models.baseline_gpt import BaselineGPT
+from src.models.factory import build_model
 from src.data.dataset import PackedMemmapDataset
 from src.utils.config import load_config
 from src.utils.seed import set_seed
 from src.utils.checkpointing import load_checkpoint
+
+def require_cuda(device_str: str) -> None:
+    if not device_str.startswith("cuda"):
+        raise RuntimeError(
+            f"This repo is GPU-only. Got run.device={device_str!r}. "
+            "Set run.device to 'cuda' or 'cuda:0'."
+        )
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available. This repo is GPU-only.")
+
 
 @torch.no_grad()
 def evaluate_test(model, loader, device, amp=False):
@@ -51,7 +61,8 @@ def main():
     cfg = load_config(args.config)
     set_seed(args.seed)
     
-    device = torch.device(cfg.run.device if torch.cuda.is_available() else "cpu")
+    require_cuda(cfg.run.device)
+    device = torch.device(cfg.run.device)
     print(f"Using device: {device}")
     
     # Load dataset
@@ -63,7 +74,7 @@ def main():
     tokenizer = Tokenizer.from_file(str(tokenizer_path))
     
     # Build model and load state
-    model = BaselineGPT(cfg).to(device)
+    model = build_model(cfg).to(device)
     load_checkpoint(args.ckpt, model)
     
     print("\n--- Evaluation on Test Split ---")

@@ -52,7 +52,7 @@ class PackedMemmapDataset(Dataset):
 if __name__ == "__main__":
     # Test loader with a mock setup or check if data exists
     # This is mainly for manual sanity testing
-    processed_dir = "data/processed/wt2_bpe8k_seq128"
+    processed_dir = "data/processed/ts_bpe8k_seq128"
     if os.path.exists(processed_dir):
         try:
             ds = PackedMemmapDataset("validation", processed_dir)

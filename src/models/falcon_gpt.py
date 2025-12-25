@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from src.models.layers import TransformerBlock
 
-class ExperimentalGPT(nn.Module):
+class FalconGPT(nn.Module):
     def __init__(self, cfg):
         super().__init__()
         self.max_seq_len = cfg.model.max_seq_len

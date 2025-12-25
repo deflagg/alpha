@@ -1,5 +1,5 @@
 run:
-  name: baseline_wt2_bpe8k
+  name: baseline_ts_bpe8k
   seed: 42
   device: cuda
   out_dir: artifacts/runs
@@ -18,7 +18,7 @@ data:
     validation_n: null
 
 tokenizer:
-  out_dir: artifacts/tokenizers/bpe8k_wt2
+  out_dir: artifacts/tokenizers/bpe8k_ts
   vocab_size: 8192
   special_tokens: ["<pad>", "<bos>", "<eos>", "<unk>"]
 

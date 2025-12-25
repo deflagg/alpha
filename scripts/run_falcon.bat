@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0\.."
 set PYTHONPATH=%CD%
 
-set CONFIG=configs\experimental.yaml
+set CONFIG=configs\falcon.yaml
 
 echo.
 echo # 1) data prep (one-time)
