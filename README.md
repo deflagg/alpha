@@ -53,13 +53,35 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 
 ## Setup
 
-1. **Install dependencies**:
+1. **Baseline model setup**:
    ```bash
+   git clone https://github.com/deflagg/alpha.git
+   cd alpha
+
+   git pull origin main
+
+   python3 -m venv .venv
+   source .venv/bin/activate
    pip install -r requirements.txt
+
+   chmod +x scripts/run_baseline.sh
+   ./scripts/run_baseline.sh
    ```
 
-2. **Setup Environment**:
-   Copy `.env.example` to `.env` and add your `WANDB_API_KEY`.
+2. **Falcon model setup**:
+   ```bash
+   git clone https://github.com/deflagg/alpha.git
+   cd alpha
+
+   git pull origin main
+
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+
+   chmod +x scripts/run_falcon.sh
+   ./scripts/run_falcon.sh
+   ```
 
 ## Usage
 
@@ -82,7 +104,7 @@ chmod +x scripts/*.sh
 ### 3. Evaluation
 Pass a checkpoint path to the runner scripts to run evaluation:
 ```bash
-./scripts/run_baseline.sh artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
+python -m src.eval --config configs/baseline.yaml --ckpt artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
 ```
 
 ## Verification

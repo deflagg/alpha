@@ -28,4 +28,5 @@ if [ -z "$CKPT" ]; then
 fi
 
 python -m src.eval --config $CONFIG --ckpt $CKPT
+
 echo "Done."
