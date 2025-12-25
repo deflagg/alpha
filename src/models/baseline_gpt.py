@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.models.layers import TransformerBlock
+from src.models.baseline_layers import TransformerBlock
 
 class BaselineGPT(nn.Module):
     def __init__(self, cfg):
