@@ -18,7 +18,7 @@ if errorlevel 1 exit /b %errorlevel%
 
 echo.
 echo # 2) train
-python -m src.train --config %CONFIG%
+python -m src.train_falcon --config %CONFIG%
 if errorlevel 1 exit /b %errorlevel%
 
 echo.
@@ -26,7 +26,7 @@ echo # 3) eval (optional standalone)
 set CKPT=%1
 if "%CKPT%"=="" goto :done
 
-python -m src.eval --config %CONFIG% --ckpt %CKPT%
+python -m src.eval_falcon --config %CONFIG% --ckpt %CKPT%
 if errorlevel 1 exit /b %errorlevel%
 
 :done

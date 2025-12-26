@@ -17,7 +17,7 @@ python -m src.data.pretokenize_and_pack --config $CONFIG
 
 echo ""
 echo "# 2) train"
-python -m src.train --config $CONFIG
+python -m src.train_falcon --config $CONFIG
 
 echo ""
 echo "# 3) eval (optional standalone)"
@@ -27,5 +27,5 @@ if [ -z "$CKPT" ]; then
     exit 0
 fi
 
-python -m src.eval --config $CONFIG --ckpt $CKPT
+python -m src.eval_falcon --config $CONFIG --ckpt $CKPT
 echo "Done."

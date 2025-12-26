@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tokenizers import Tokenizer
 from pathlib import Path
 
-from src.models.factory import build_model
+from src.models.falcon.model import FalconGPT
 from src.data.dataset import PackedMemmapDataset
 from src.utils.config import load_config
 from src.utils.seed import set_seed
@@ -41,24 +41,24 @@ def sample_greedy(model, tokenizer, prompt, max_new_tokens, device):
     encoded = tokenizer.encode(prompt)
     idx = torch.tensor(encoded.ids, dtype=torch.long, device=device).unsqueeze(0)
     
-    # We use greedy for the baseline, so temperature=1.0 and top_k=None is fine for pure greedy if we use argmax
-    # But BaselineGPT.generate uses multinomial. For true greedy, we can just use argmax.
-    # Let's adjust BaselineGPT.generate or just do it here.
-    # Actually, if temperature is very low, it's basically greedy.
-    # Or I can just implement a simple greedy loop here.
-    
     generated_idx = model.generate(idx, max_new_tokens, temperature=0.01) # Near-greedy
     decoded = tokenizer.decode(generated_idx[0].cpu().numpy())
     return decoded
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help="Path to config yaml")
+    parser.add_argument("--config", type=str, required=True, help="Path to falcon config yaml")
     parser.add_argument("--ckpt", type=str, required=True, help="Path to checkpoint .pt file")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     
     cfg = load_config(args.config)
+    model_type = getattr(cfg.model, "type", None)
+    if model_type != "falcon":
+        raise ValueError(
+            "eval_falcon expects model.type='falcon'. "
+            f"Got model.type={model_type!r}."
+        )
     set_seed(args.seed)
     
     require_cuda(cfg.run.device)
@@ -74,7 +74,7 @@ def main():
     tokenizer = Tokenizer.from_file(str(tokenizer_path))
     
     # Build model and load state
-    model = build_model(cfg).to(device)
+    model = FalconGPT(cfg).to(device)
     load_checkpoint(args.ckpt, model)
     
     print("\n--- Evaluation on Test Split ---")

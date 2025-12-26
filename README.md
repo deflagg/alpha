@@ -44,8 +44,10 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 │  │  ├─ baseline/              # Baseline GPT implementation
 │  │  └─ falcon/                # Falcon GPT implementation
 │  ├─ utils/                    # Common utils
-│  ├─ train.py                  # Main training loop
-│  └─ eval.py                   # Evaluation and sampling harness
+│  ├─ train_baseline.py         # Baseline training loop
+│  ├─ train_falcon.py           # Falcon training loop
+│  ├─ eval_baseline.py          # Baseline evaluation and sampling harness
+│  └─ eval_falcon.py            # Falcon evaluation and sampling harness
 ├─ .env.example                 # W&B credentials template
 ├─ requirements.txt             # Dependencies
 └─ README.md
@@ -104,7 +106,8 @@ chmod +x scripts/**/*.sh
 ### 3. Evaluation
 Pass a checkpoint path to the runner scripts to run evaluation:
 ```bash
-python -m src.eval --config configs/baseline.yaml --ckpt artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
+python -m src.eval_baseline --config configs/baseline.yaml --ckpt artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
+python -m src.eval_falcon --config configs/falcon.yaml --ckpt artifacts/runs/falcon_ts_bpe8k/checkpoints/best_model.pt
 ```
 
 ## Verification

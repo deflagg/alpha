@@ -1,4 +1,3 @@
-import os
 import time
 import argparse
 import math
@@ -6,9 +5,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from pathlib import Path
-from tqdm import tqdm
 
-from src.models.factory import build_model
+from src.models.falcon.model import FalconGPT
 from src.data.dataset import PackedMemmapDataset
 from src.utils.config import load_config
 from src.utils.seed import set_seed
@@ -56,10 +54,16 @@ def evaluate(model, dataloader, device, amp=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help="Path to baseline.yaml")
+    parser.add_argument("--config", type=str, required=True, help="Path to falcon config yaml")
     args = parser.parse_args()
     
     cfg = load_config(args.config)
+    model_type = getattr(cfg.model, "type", None)
+    if model_type != "falcon":
+        raise ValueError(
+            "train_falcon expects model.type='falcon'. "
+            f"Got model.type={model_type!r}."
+        )
     set_seed(cfg.run.seed)
     setup_logging(cfg)
     
@@ -75,7 +79,7 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size, shuffle=False)
     
     # Model
-    model = build_model(cfg).to(device)
+    model = FalconGPT(cfg).to(device)
     
     # Optimizer
     optimizer = torch.optim.AdamW(
