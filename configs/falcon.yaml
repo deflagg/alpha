@@ -32,6 +32,15 @@ model:
   prenorm: true
   dropout: 0.0
   tie_weights: true
+  moe:
+    enabled: true
+    n_experts: 8
+    top_k: 2
+    capacity_factor: 1.25
+    drop_tokens: true
+    router_aux_coef: 0.01
+    router_zloss_coef: 1.0e-3
+    d_ff_expert: null
 
 train:
   batch_size: 64

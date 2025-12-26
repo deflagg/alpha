@@ -28,7 +28,7 @@ def evaluate_test(model, loader, device, amp=False):
     for x, y in loader:
         x, y = x.to(device), y.to(device)
         with torch.amp.autocast('cuda', enabled=amp):
-            logits = model(x)
+            logits, _, _ = model(x)
             loss = torch.nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
         losses.append(loss.item())
     

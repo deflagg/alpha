@@ -43,7 +43,7 @@ def evaluate(model, dataloader, device, amp=False):
     for x, y in dataloader:
         x, y = x.to(device), y.to(device)
         with torch.amp.autocast('cuda', enabled=amp):
-            logits = model(x)
+            logits, _, _ = model(x)
             loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
         losses.append(loss.item())
     
@@ -121,8 +121,9 @@ def main():
             
         # Optimization step
         with torch.amp.autocast('cuda', enabled=cfg.train.amp):
-            logits = model(x)
-            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            logits, aux_loss, moe_stats = model(x)
+            ce_loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            loss = ce_loss + aux_loss
             
         scaler.scale(loss).backward()
         
@@ -141,16 +142,27 @@ def main():
             t0 = t1
             tokens_per_sec = (cfg.train.batch_size * cfg.data.seq_len * cfg.logging.log_every) / dt
             
-            ppl = math.exp(loss.item()) if loss.item() < 20 else float('inf')
+            ppl = math.exp(ce_loss.item()) if ce_loss.item() < 20 else float('inf')
             
             metrics = {
                 "train/loss": loss.item(),
+                "train/ce_loss": ce_loss.item(),
                 "train/ppl": ppl,
                 "train/lr": curr_lr,
                 "train/tokens_per_sec": tokens_per_sec,
             }
+            
+            # Add MoE metrics if using MoE
+            if moe_stats is not None:
+                metrics.update({
+                    "train/moe_aux_loss": aux_loss.item(),
+                    "train/moe_balance_loss": moe_stats.avg_balance_loss,
+                    "train/moe_z_loss": moe_stats.avg_z_loss,
+                    "train/moe_dropped_frac": moe_stats.total_dropped_frac,
+                })
+            
             log_metrics(metrics, step)
-            print(f"Step {step}: loss {loss.item():.4f}, ppl {ppl:.2f}, lr {curr_lr:.2e}, tok/s {tokens_per_sec:.0f}")
+            print(f"Step {step}: loss {loss.item():.4f}, ce {ce_loss.item():.4f}, ppl {ppl:.2f}, lr {curr_lr:.2e}, tok/s {tokens_per_sec:.0f}")
             
         # Evaluation
         if step > 0 and step % cfg.train.eval_every == 0:
