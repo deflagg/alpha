@@ -66,8 +66,8 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 
    git pull origin main
 
-   python3 -m venv .venv
-   source .venv/bin/activate
+   #python3 -m venv .venv
+   #source .venv/bin/activate
    pip install -r requirements.txt
 
    chmod +x scripts/baseline/run.sh
@@ -81,8 +81,8 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 
    git pull origin main
 
-   python3 -m venv .venv
-   source .venv/bin/activate
+   #python3 -m venv .venv
+   #source .venv/bin/activate
    pip install -r requirements.txt
 
    chmod +x scripts/condor/run.sh
