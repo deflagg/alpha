@@ -11,9 +11,10 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 - **Full Quadratic Causal Attention**: Manual mask implemented to ensure no future leakage.
 - **Custom BPE Tokenizer**: Byte-level BPE with 8192 vocab size trained only on the training split.
 - **Optimized Data Pipeline**: 
-    - **Skip-if-valid**: Scripts automatically skip redundant work if artifacts match the current config.
-    - **int32 Storage**: Packed tokens are stored as `int32` for future-proofing.
-    - **Zero-Copy Loading**: Data is loaded directly from memmap without per-sample type conversion.
+    - **Skip-if-valid**: Scripts skip work by comparing `meta.json` with current config and verifying file existence/size.
+    - **Hashing**: Use `--verify` to trigger full SHA256 validation (slower).
+    - **int32 Storage**: Packed tokens use `int32` dtype for large vocab support.
+    - **Zero-Copy Loading**: Data is loaded directly from memmap without per-sample `astype(np.int64)`.
 - **GPU-Only**: Explicitly requires CUDA for performance and consistency.
 
 ## Tech Stack
@@ -30,6 +31,7 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 .
 ├─ configs/
 │  ├─ baseline.yaml             # Baseline model config
+│  ├─ condor.yaml               # Condor model config
 │  └─ falcon.yaml               # Falcon model config
 ├─ data/
 │  ├─ raw/                      # Downloaded raw text
@@ -51,7 +53,6 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 │  ├─ utils/                    # Common utils
 │  ├─ train_*.py                # Training loops per model type
 │  └─ eval_*.py                 # Evaluation harnesses per model type
-├─ .env.example                 # W&B credentials template
 ├─ requirements.txt             # Dependencies
 └─ README.md
 ```
@@ -85,32 +86,38 @@ This project implements a decoder-only Transformer with a focus on reproducibili
    pip install -r requirements.txt
 
    chmod +x scripts/falcon/run.sh
+   # Create .env and add WANDB_API_KEY if logging to W&B
    ./scripts/falcon/run.sh
    ```
 
 ## Usage
 
-### 1. Full Pipeline (Linux/WSL)
-Run the entire data prep and training pipeline using the provided shell scripts:
+### 1. Training & Data Prep
+The runner scripts handle data downloading, tokenizer training, and token packing before starting the training loop. They use a fast cache check by default.
+
 ```bash
 chmod +x scripts/**/*.sh
 
-# Run with caching (default)
+# 1. Standard run (cached prep + training, skips eval)
 ./scripts/condor/run.sh
 
-# Force rebuild of artifacts
+# 2. Force rebuild artifacts (ignores cache)
 ./scripts/condor/run.sh --force
 
-# Verify artifacts with SHA256 hashes
+# 3. Verify artifact integrity (slow SHA256 check)
 ./scripts/condor/run.sh --verify
-```
 
-### 2. Evaluation
-To run evaluation, use the `--ckpt` flag with the runner script or call the Python module directly:
-```bash
+# 4. Run training and THEN evaluation
 ./scripts/condor/run.sh --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
 
-# Standalone call
+# 5. Force rebuild everything and evaluate
+./scripts/condor/run.sh --force --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
+```
+
+### 2. Standalone Evaluation
+Evaluation is only triggered in `run.sh` if `--ckpt` is provided. You can also run it directly:
+
+```bash
 python -m src.eval_condor --config configs/condor.yaml --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
 ```
 
