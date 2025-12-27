@@ -29,7 +29,7 @@ def evaluate_test(model, loader, device, amp=False):
         x, y = x.to(device), y.to(device)
         with torch.amp.autocast('cuda', enabled=amp):
             logits = model(x)
-            loss = torch.nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            loss = torch.nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1).long())
         losses.append(loss.item())
     
     mean_loss = sum(losses) / len(losses)
@@ -66,8 +66,17 @@ def main():
     print(f"Using device: {device}")
     
     # Load dataset
+    num_workers = getattr(cfg.train, "num_workers", 4)
     test_ds = PackedMemmapDataset("test", cfg.data.processed_dir)
-    test_loader = DataLoader(test_ds, batch_size=cfg.train.batch_size, shuffle=False)
+    test_loader = DataLoader(
+        test_ds, 
+        batch_size=cfg.train.batch_size, 
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        persistent_workers=num_workers > 0,
+        prefetch_factor=2 if num_workers > 0 else None
+    )
     
     # Load tokenizer for sampling
     tokenizer_path = Path(cfg.tokenizer.out_dir) / "tokenizer.json"

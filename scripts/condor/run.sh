@@ -9,15 +9,13 @@ CONFIG="configs/condor.yaml"
 
 echo ""
 echo "# 1) data prep (one-time)"
-python -m src.data.download_tinystories --config $CONFIG
-
-python -m src.data.train_tokenizer --config $CONFIG
-
-python -m src.data.pretokenize_and_pack --config $CONFIG
+python -m src.data.download_tinystories --config $CONFIG "$@"
+python -m src.data.train_tokenizer --config $CONFIG "$@"
+python -m src.data.pretokenize_and_pack --config $CONFIG "$@"
 
 echo ""
 echo "# 2) train"
-python -m src.train_condor --config $CONFIG
+python -m src.train_condor --config $CONFIG "$@"
 
 echo ""
 echo "# 3) eval (optional standalone)"

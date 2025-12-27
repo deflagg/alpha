@@ -43,9 +43,10 @@ class PackedMemmapDataset(Dataset):
     def __getitem__(self, idx):
         row = self.data[idx]
         
-        # Convert to torch tensors
-        x = torch.from_numpy(row[:self.seq_len].astype(np.int64))
-        y = torch.from_numpy(row[1:].astype(np.int64))
+        # Convert to torch tensors (zero-copy from numpy)
+        # x and y will be torch.int32
+        x = torch.from_numpy(row[:self.seq_len])
+        y = torch.from_numpy(row[1:])
         
         return x, y
 

@@ -44,7 +44,7 @@ def evaluate(model, dataloader, device, amp=False):
         x, y = x.to(device), y.to(device)
         with torch.amp.autocast('cuda', enabled=amp):
             logits, _, _ = model(x)
-            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1).long())
         losses.append(loss.item())
     
     mean_loss = sum(losses) / len(losses)
@@ -72,11 +72,28 @@ def main():
     print(f"Using device: {device}")
     
     # Data loaders
+    num_workers = getattr(cfg.train, "num_workers", 4)
     train_ds = PackedMemmapDataset("train", cfg.data.processed_dir)
     val_ds = PackedMemmapDataset("validation", cfg.data.processed_dir)
     
-    train_loader = DataLoader(train_ds, batch_size=cfg.train.batch_size, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_ds, 
+        batch_size=cfg.train.batch_size, 
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+        persistent_workers=num_workers > 0,
+        prefetch_factor=2 if num_workers > 0 else None
+    )
+    val_loader = DataLoader(
+        val_ds, 
+        batch_size=cfg.train.batch_size, 
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        persistent_workers=num_workers > 0,
+        prefetch_factor=2 if num_workers > 0 else None
+    )
     
     # Model
     model = FalconGPT(cfg).to(device)
@@ -122,7 +139,7 @@ def main():
         # Optimization step
         with torch.amp.autocast('cuda', enabled=cfg.train.amp):
             logits, aux_loss, moe_stats = model(x)
-            ce_loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            ce_loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1).long())
             loss = ce_loss + aux_loss
             
         scaler.scale(loss).backward()

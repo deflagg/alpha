@@ -7,16 +7,14 @@ from pathlib import Path
 from datasets import load_dataset
 from src.utils.config import load_config
 
-def get_sha256(file_path):
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
+
+from src.data.cache_utils import get_sha256, is_cache_valid
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to config file")
+    parser.add_argument("--force", action="store_true", help="Force rebuild")
+    parser.add_argument("--verify", action="store_true", help="Perform full SHA256 verification")
     args = parser.parse_args()
     
     cfg = load_config(args.config)
@@ -31,6 +29,21 @@ def main():
     test_n = sub_cfg.test_n
     val_n = sub_cfg.validation_n
     
+    # Cache check
+    meta_path = raw_dir / "meta.json"
+    expected_config = {
+        "dataset": dataset_name,
+        "seed": seed,
+        "train_n": train_n,
+        "test_n": test_n,
+        "validation_n": val_n
+    }
+    required_files = [raw_dir / f"{s}.txt" for s in ["train", "test", "validation"]]
+    
+    if not args.force and is_cache_valid(meta_path, expected_config, required_files, verify=args.verify):
+        print(f"Skipping download (cache valid): {raw_dir}")
+        return
+
     print(f"Loading dataset {dataset_name}...")
     dataset = load_dataset(dataset_name)
     
@@ -82,10 +95,12 @@ def main():
                     line_count += 1
         
         checksum = get_sha256(output_file)
+        size_bytes = output_file.stat().st_size
         meta["splits"][split_name] = {
             "file": f"{split_name}.txt",
             "line_count": line_count,
             "sha256": checksum,
+            "size_bytes": size_bytes,
             "num_examples": len(ds)
         }
         
@@ -99,7 +114,6 @@ def main():
         
         print(f"  Saved to {output_file} ({line_count} lines, sha256: {checksum[:8]}...)")
     
-    meta_path = raw_dir / "meta.json"
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
     
