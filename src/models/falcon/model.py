@@ -27,9 +27,8 @@ class FalconGPT(nn.Module):
         super().__init__()
         self.max_seq_len = cfg.model.max_seq_len
         
-        # Get MoE config if present
-        moe_cfg = getattr(cfg.model, 'moe', None)
-        self.use_moe = moe_cfg is not None and getattr(moe_cfg, 'enabled', False)
+        # MoE config is now mandatory
+        moe_cfg = cfg.model.moe
         
         self.transformer = nn.ModuleDict(dict(
             tok_emb = nn.Embedding(cfg.tokenizer.vocab_size, cfg.model.d_model),
@@ -55,8 +54,7 @@ class FalconGPT(nn.Module):
         # Initialize weights
         self.apply(self._init_weights)
         
-        model_type = "MoE" if self.use_moe else "Dense"
-        print(f"Falcon Model ({model_type}) initialized with {self.get_n_params()/1e6:.2f}M parameters.")
+        print(f"Falcon MoE Model initialized with {self.get_n_params()/1e6:.2f}M parameters.")
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -69,12 +67,12 @@ class FalconGPT(nn.Module):
     def get_n_params(self):
         return sum(p.numel() for p in self.parameters())
 
-    def forward(self, idx: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, Optional[AggregatedMoEStats]]:
+    def forward(self, idx: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, AggregatedMoEStats]:
         """
         Returns:
             logits: [B, T, V]
-            aux_loss: scalar tensor (sum of aux losses across layers, 0.0 if not using MoE)
-            stats: AggregatedMoEStats or None
+            aux_loss: scalar tensor (sum of aux losses across layers)
+            stats: AggregatedMoEStats
         """
         device = idx.device
         B, T = idx.size()
@@ -94,8 +92,7 @@ class FalconGPT(nn.Module):
         for block in self.transformer.blocks:
             x, aux_loss, stats = block(x)
             total_aux_loss = total_aux_loss + aux_loss
-            if stats is not None:
-                layer_stats.append(stats)
+            layer_stats.append(stats)
             
         # Final norm
         x = self.transformer.ln_f(x)
@@ -104,17 +101,14 @@ class FalconGPT(nn.Module):
         logits = self.lm_head(x) # [B, T, V]
         
         # Aggregate stats
-        if self.use_moe and layer_stats:
-            n_layers = len(layer_stats)
-            agg_stats = AggregatedMoEStats(
-                total_dropped_assignments=sum(s.dropped_assignments for s in layer_stats),
-                total_dropped_frac=sum(s.dropped_frac for s in layer_stats) / n_layers,
-                avg_balance_loss=sum(s.balance_loss for s in layer_stats) / n_layers,
-                avg_z_loss=sum(s.z_loss for s in layer_stats) / n_layers,
-                per_layer_stats=layer_stats,
-            )
-        else:
-            agg_stats = None
+        n_layers = len(layer_stats)
+        agg_stats = AggregatedMoEStats(
+            total_dropped_assignments=sum(s.dropped_assignments for s in layer_stats),
+            total_dropped_frac=sum(s.dropped_frac for s in layer_stats) / n_layers,
+            avg_balance_loss=sum(s.balance_loss for s in layer_stats) / n_layers,
+            avg_z_loss=sum(s.z_loss for s in layer_stats) / n_layers,
+            per_layer_stats=layer_stats,
+        )
         
         return logits, total_aux_loss, agg_stats
 

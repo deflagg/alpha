@@ -150,16 +150,11 @@ def main():
                 "train/ppl": ppl,
                 "train/lr": curr_lr,
                 "train/tokens_per_sec": tokens_per_sec,
+                "train/moe_aux_loss": aux_loss.item(),
+                "train/moe_balance_loss": moe_stats.avg_balance_loss,
+                "train/moe_z_loss": moe_stats.avg_z_loss,
+                "train/moe_dropped_frac": moe_stats.total_dropped_frac,
             }
-            
-            # Add MoE metrics if using MoE
-            if moe_stats is not None:
-                metrics.update({
-                    "train/moe_aux_loss": aux_loss.item(),
-                    "train/moe_balance_loss": moe_stats.avg_balance_loss,
-                    "train/moe_z_loss": moe_stats.avg_z_loss,
-                    "train/moe_dropped_frac": moe_stats.total_dropped_frac,
-                })
             
             log_metrics(metrics, step)
             print(f"Step {step}: loss {loss.item():.4f}, ce {ce_loss.item():.4f}, ppl {ppl:.2f}, lr {curr_lr:.2e}, tok/s {tokens_per_sec:.0f}")

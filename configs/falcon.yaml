@@ -33,7 +33,6 @@ model:
   dropout: 0.0
   tie_weights: true
   moe:
-    enabled: true
     n_experts: 8
     top_k: 2
     capacity_factor: 1.25

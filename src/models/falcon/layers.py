@@ -243,49 +243,40 @@ class TransformerBlock(nn.Module):
         n_heads: int,
         d_ff: int,
         max_seq_len: int,
-        moe_cfg: Optional[Any] = None,
+        moe_cfg: Any,
     ):
         super().__init__()
         self.ln1 = nn.LayerNorm(d_model)
         self.attn = CausalSelfAttention(d_model, n_heads, max_seq_len)
         self.ln2 = nn.LayerNorm(d_model)
         
-        self.use_moe = moe_cfg is not None and getattr(moe_cfg, 'enabled', False)
+        # Compute d_ff_expert
+        d_ff_expert = getattr(moe_cfg, 'd_ff_expert', None)
+        if d_ff_expert is None:
+            d_ff_expert = d_ff // moe_cfg.top_k
+        assert d_ff_expert >= 1, f"d_ff_expert must be >= 1, got {d_ff_expert}"
         
-        if self.use_moe:
-            # Compute d_ff_expert
-            d_ff_expert = getattr(moe_cfg, 'd_ff_expert', None)
-            if d_ff_expert is None:
-                d_ff_expert = d_ff // moe_cfg.top_k
-            assert d_ff_expert >= 1, f"d_ff_expert must be >= 1, got {d_ff_expert}"
-            
-            self.ffn = MoE(
-                d_model=d_model,
-                d_ff_expert=d_ff_expert,
-                n_experts=moe_cfg.n_experts,
-                top_k=moe_cfg.top_k,
-                capacity_factor=moe_cfg.capacity_factor,
-                drop_tokens=moe_cfg.drop_tokens,
-                router_aux_coef=moe_cfg.router_aux_coef,
-                router_zloss_coef=moe_cfg.router_zloss_coef,
-            )
-        else:
-            self.ffn = MLP(d_model, d_ff)
+        self.ffn = MoE(
+            d_model=d_model,
+            d_ff_expert=d_ff_expert,
+            n_experts=moe_cfg.n_experts,
+            top_k=moe_cfg.top_k,
+            capacity_factor=moe_cfg.capacity_factor,
+            drop_tokens=moe_cfg.drop_tokens,
+            router_aux_coef=moe_cfg.router_aux_coef,
+            router_zloss_coef=moe_cfg.router_zloss_coef,
+        )
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, Optional[MoEStats]]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, MoEStats]:
         """
         Returns:
             x: [B, T, d_model]
-            aux_loss: scalar tensor (0.0 if not using MoE)
-            stats: MoEStats or None
+            aux_loss: scalar tensor
+            stats: MoEStats
         """
         # Pre-Norm architecture
         x = x + self.attn(self.ln1(x))
         
-        if self.use_moe:
-            ffn_out, aux_loss, stats = self.ffn(self.ln2(x))
-            x = x + ffn_out
-            return x, aux_loss, stats
-        else:
-            x = x + self.ffn(self.ln2(x))
-            return x, torch.tensor(0.0, device=x.device), None
+        ffn_out, aux_loss, stats = self.ffn(self.ln2(x))
+        x = x + ffn_out
+        return x, aux_loss, stats
