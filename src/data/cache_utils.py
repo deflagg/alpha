@@ -62,7 +62,10 @@ def is_cache_valid(
             # Fallback for tokenizer where it might be top level or differently named
             if file_name == "tokenizer.json":
                 if "tokenizer_sha256" in meta:
-                    file_meta = {"sha256": meta["tokenizer_sha256"]}
+                    file_meta = {
+                        "sha256": meta["tokenizer_sha256"],
+                        "size_bytes": meta.get("size_bytes")
+                    }
             # Generic files check?
         
         if file_meta:
