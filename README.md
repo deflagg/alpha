@@ -74,7 +74,22 @@ This project implements a decoder-only Transformer with a focus on reproducibili
    ./scripts/baseline/run.sh
    ```
 
-2. **Falcon model setup**:
+2. **Condor model setup**:
+   ```bash
+   git clone https://github.com/deflagg/alpha.git
+   cd alpha
+
+   git pull origin main
+
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+
+   chmod +x scripts/condor/run.sh
+   ./scripts/condor/run.sh
+   ```
+
+3. **Falcon model setup**:
    ```bash
    git clone https://github.com/deflagg/alpha.git
    cd alpha
