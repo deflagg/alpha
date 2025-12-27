@@ -5,13 +5,15 @@ A clean, reproducible baseline GPT-style language model trained on the TinyStori
 ## Overview
 
 This project implements a decoder-only Transformer with a focus on reproducibility and baseline purity. It features:
-- **Decoder-only Transformer**: GPT-style architecture.
+- **Decoder-only Transformer**: GPT-style architecture (Baseline, Falcon MoE, Condor).
 - **Pre-normalization (Pre-LN)**: For stable training.
 - **No Dropout**: Set to 0.0 everywhere to maintain baseline results.
 - **Full Quadratic Causal Attention**: Manual mask implemented to ensure no future leakage.
 - **Custom BPE Tokenizer**: Byte-level BPE with 8192 vocab size trained only on the training split.
-- **Fixed Seq-Len Packing**: Tokenized stream packed into blocks of 129 tokens (`seq_len=128` + 1 target).
-- **Single-run Reproducibility**: Seeded components and checksum-verified dataset/tokenizer artifacts.
+- **Optimized Data Pipeline**: 
+    - **Skip-if-valid**: Scripts automatically skip redundant work if artifacts match the current config.
+    - **int32 Storage**: Packed tokens are stored as `int32` for future-proofing.
+    - **Zero-Copy Loading**: Data is loaded directly from memmap without per-sample type conversion.
 - **GPU-Only**: Explicitly requires CUDA for performance and consistency.
 
 ## Tech Stack
@@ -37,17 +39,18 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 │  └─ runs/                     # Checkpoints and logs
 ├─ scripts/
 │  ├─ baseline/                 # Baseline runner scripts
+│  ├─ condor/                   # Condor runner scripts
 │  └─ falcon/                   # Falcon runner scripts
 ├─ src/
-│  ├─ data/                     # Data pipeline
+│  ├─ data/                     # Data pipeline (download, tokenize, pack)
+│  │  └─ cache_utils.py         # Shared cache validation logic
 │  ├─ models/                   # Model architectures
 │  │  ├─ baseline/              # Baseline GPT implementation
+│  │  ├─ condor/                # Condor GPT implementation
 │  │  └─ falcon/                # Falcon GPT implementation
 │  ├─ utils/                    # Common utils
-│  ├─ train_baseline.py         # Baseline training loop
-│  ├─ train_falcon.py           # Falcon training loop
-│  ├─ eval_baseline.py          # Baseline evaluation and sampling harness
-│  └─ eval_falcon.py            # Falcon evaluation and sampling harness
+│  ├─ train_*.py                # Training loops per model type
+│  └─ eval_*.py                 # Evaluation harnesses per model type
 ├─ .env.example                 # W&B credentials template
 ├─ requirements.txt             # Dependencies
 └─ README.md
@@ -87,28 +90,31 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 
 ## Usage
 
-### 1. Full Pipeline (Windows)
-Run the entire data prep and training pipeline:
-```bat
-scripts\baseline\run.bat
-```
-Or for the falcon model:
-```bat
-scripts\falcon\run.bat
-```
-
-### 2. Full Pipeline (Linux)
+### 1. Full Pipeline (Linux/WSL)
+Run the entire data prep and training pipeline using the provided shell scripts:
 ```bash
 chmod +x scripts/**/*.sh
-./scripts/baseline/run.sh
+
+# Run with caching (default)
+./scripts/condor/run.sh
+
+# Force rebuild of artifacts
+./scripts/condor/run.sh --force
+
+# Verify artifacts with SHA256 hashes
+./scripts/condor/run.sh --verify
 ```
 
-### 3. Evaluation
-Pass a checkpoint path to the runner scripts to run evaluation:
+### 2. Evaluation
+To run evaluation, use the `--ckpt` flag with the runner script or call the Python module directly:
 ```bash
-python -m src.eval_baseline --config configs/baseline.yaml --ckpt artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
-python -m src.eval_falcon --config configs/falcon.yaml --ckpt artifacts/runs/falcon_ts_bpe8k/checkpoints/best_model.pt
+./scripts/condor/run.sh --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
+
+# Standalone call
+python -m src.eval_condor --config configs/condor.yaml --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
 ```
+
+For all scripts, use `-h` or `--help` to see all available options.
 
 ## Verification
 
