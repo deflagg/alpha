@@ -27,7 +27,8 @@ class PackedMemmapDataset(Dataset):
         self.seq_len = self.meta["seq_len"]
         
         # Open memmap
-        self.data = np.memmap(self.bin_file, dtype=self.dtype, mode='r', shape=self.shape)
+        # Using mode 'c' for copy-on-write to avoid accidental writes
+        self.data = np.memmap(self.bin_file, dtype=self.dtype, mode='c', shape=self.shape)
         
         # Quick assertion on initialization for a random row (if data exists)
         if len(self.data) > 0:
