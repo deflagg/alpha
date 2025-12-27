@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .layers import TransformerBlock, MoEStats
-from typing import Optional, Dict, Any
+from .layers import TransformerBlock
+from typing import Dict, Any
 from dataclasses import dataclass, field
 
 @dataclass
@@ -28,6 +28,8 @@ class FalconGPT(nn.Module):
         self.max_seq_len = cfg.model.max_seq_len
         
         # MoE config is now mandatory
+        if not hasattr(cfg.model, "moe"):
+            raise ValueError("Falcon requires model.moe config to exist (MoE-only).")
         moe_cfg = cfg.model.moe
         
         self.transformer = nn.ModuleDict(dict(

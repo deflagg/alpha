@@ -77,8 +77,8 @@ This project implements a decoder-only Transformer with a focus on reproducibili
 
    git pull origin main
 
-   python3 -m venv .venv
-   source .venv/bin/activate
+   #python3 -m venv .venv
+   #source .venv/bin/activate
    pip install -r requirements.txt
 
    chmod +x scripts/falcon/run.sh

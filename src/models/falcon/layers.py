@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 @dataclass
 class MoEStats:
@@ -251,7 +251,7 @@ class TransformerBlock(nn.Module):
         self.ln2 = nn.LayerNorm(d_model)
         
         # Compute d_ff_expert
-        d_ff_expert = getattr(moe_cfg, 'd_ff_expert', None)
+        d_ff_expert = moe_cfg.d_ff_expert
         if d_ff_expert is None:
             d_ff_expert = d_ff // moe_cfg.top_k
         assert d_ff_expert >= 1, f"d_ff_expert must be >= 1, got {d_ff_expert}"
