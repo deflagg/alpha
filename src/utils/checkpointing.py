@@ -40,7 +40,7 @@ def save_checkpoint(
 
 def load_checkpoint(ckpt_path: str, model: torch.nn.Module, optimizer=None, scheduler=None):
     print(f"Loading checkpoint from {ckpt_path}...")
-    checkpoint = torch.load(ckpt_path, map_location="cpu")
+    checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=True)
     model.load_state_dict(checkpoint["model"])
     if optimizer:
         optimizer.load_state_dict(checkpoint["optimizer"])
