@@ -39,6 +39,8 @@ class CausalSelfAttention(nn.Module):
         # [B, n_heads, T, T]
         attn = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
         
+        attn = attn * -1
+        
         # Apply mask
         attn = attn.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
         attn = F.softmax(attn, dim=-1)

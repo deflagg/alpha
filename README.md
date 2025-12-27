@@ -133,7 +133,7 @@ chmod +x scripts/**/*.sh
 Evaluation is only triggered in `run.sh` if `--ckpt` is provided. You can also run it directly:
 
 ```bash
-python -m src.eval_condor --config configs/condor.yaml --ckpt artifacts/runs/condor_ts_bpe8k/checkpoints/best_model.pt
+python -m src.eval_baseline --config configs/baseline.yaml --ckpt artifacts/runs/baseline_ts_bpe8k/checkpoints/best_model.pt
 ```
 
 For all scripts, use `-h` or `--help` to see all available options.
