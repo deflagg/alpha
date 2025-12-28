@@ -13,7 +13,7 @@ class CausalSelfAttention(nn.Module):
         self.head_dim = d_model // n_heads
         
         # QKV projection
-        self.qkv_proj = nn.Linear(d_model, 4 * d_model, bias=True)
+        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=True)
         # Output projection
         self.out_proj = nn.Linear(d_model, d_model, bias=True)
         
@@ -28,19 +28,16 @@ class CausalSelfAttention(nn.Module):
         
         # QKV split
         qkv = self.qkv_proj(x)
-        q, k, v, x = qkv.split(self.d_model, dim=2)
+        q, k, v = qkv.split(self.d_model, dim=2)
         
         # Reshape for multi-head: [B, n_heads, T, head_dim]
         q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
-        x = x.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         
         # Scaled dot-product attention
         # [B, n_heads, T, T]
         attn = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
-        attn = attn + (x @ x.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
-        
         
         # Apply mask
         attn = attn.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
