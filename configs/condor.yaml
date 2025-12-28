@@ -36,7 +36,7 @@ model:
 train:
   batch_size: 64
   max_steps: 20000
-  eval_every: 100
+  eval_every: 1000
   save_every: 1000
   grad_clip: 1.0
   amp: true
