@@ -109,6 +109,9 @@ def main():
     # Training state
     start_step = 0
     best_val_loss = float('inf')
+    no_improve_evals = 0
+    early_stopped = False
+    end_step = cfg.train.max_steps
     scaler = torch.amp.GradScaler('cuda', enabled=cfg.train.amp)
     
     # Resolve run directory
@@ -119,6 +122,10 @@ def main():
     
     # Training loop using an iterator to handle max_steps better
     train_iter = iter(train_loader)
+    
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    training_start_time = time.perf_counter()
     
     t0 = time.time()
     for step in range(start_step, cfg.train.max_steps):
@@ -174,26 +181,56 @@ def main():
             val_loss, val_ppl = evaluate(model, val_loader, device, amp=cfg.train.amp)
             print(f"Evaluation at step {step}: val_loss {val_loss:.4f}, val_ppl {val_ppl:.2f}")
             
-            is_best = val_loss < best_val_loss
-            if is_best:
+            improved = (best_val_loss - val_loss) > cfg.train.early_stop_min_delta
+            if improved:
                 best_val_loss = val_loss
+                no_improve_evals = 0
+            elif cfg.train.early_stop_patience > 0:
+                no_improve_evals += 1
             
             log_metrics({
                 "val/loss": val_loss,
                 "val/ppl": val_ppl,
-                "val/best_loss": best_val_loss
+                "val/best_loss": best_val_loss,
+                "val/no_improve_evals": no_improve_evals
             }, step)
             
+            is_best = improved
             # Save periodic/best checkpoint
             if step % cfg.train.save_every == 0 or is_best:
                 save_checkpoint(
                     model, optimizer, None, step, str(run_dir), cfg, is_best=is_best
                 )
 
+            # Early stopping check
+            if (cfg.train.early_stop_patience > 0 and 
+                step >= cfg.train.early_stop_min_step and 
+                no_improve_evals >= cfg.train.early_stop_patience):
+                print(f"Early stopping triggered at step {step} (no improvement for {no_improve_evals} evals)")
+                early_stopped = True
+                end_step = step
+                log_metrics({
+                    "train/early_stopped": 1,
+                    "train/early_stop_step": step
+                }, step)
+                break
+
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    training_end_time = time.perf_counter()
+    wall_time_sec = training_end_time - training_start_time
+    
+    # Final logging
+    log_metrics({
+        "train/wall_time_sec": wall_time_sec,
+        "train/wall_time_min": wall_time_sec / 60.0,
+        "train/end_step": end_step
+    }, end_step)
+
     # Final save
-    save_checkpoint(model, optimizer, None, cfg.train.max_steps, str(run_dir), cfg, is_best=False)
+    save_checkpoint(model, optimizer, None, end_step, str(run_dir), cfg, is_best=False)
     finish_logging()
-    print("Training finished.")
+    print(f"Training finished at step {end_step}. Total wall time: {wall_time_sec:.2f}s ({wall_time_sec/60.0:.2f}m).")
 
 if __name__ == "__main__":
     main()

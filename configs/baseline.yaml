@@ -39,6 +39,9 @@ train:
   save_every: 1000
   grad_clip: 1.0
   amp: true
+  early_stop_patience: 0        # int; 0 disables early stopping
+  early_stop_min_delta: 0.0     # float; required improvement in val_loss
+  early_stop_min_step: 0        # int; don't early-stop before this step
 
 optim:
   lr: 3.0e-4
